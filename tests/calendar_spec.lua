@@ -204,7 +204,9 @@ describe("calendar", function()
     for _ = 1, 40 do
       press(buf, "l")
       local col = vim.api.nvim_win_get_cursor(win)[2]
-      local leftcol = vim.fn.getwininfo(win)[1].leftcol
+      local leftcol = vim.api.nvim_win_call(win, function()
+        return vim.fn.winsaveview().leftcol
+      end)
       if col >= 15 then
         reached_edge = true
         assert.equal(0, leftcol, "content should not scroll while moving right")
