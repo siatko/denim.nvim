@@ -27,13 +27,16 @@ local function gather_notes(notes_dir)
         status = "done_todo"
       end
 
+      local date_fmt = date_raw:sub(1, 4) .. "-" .. date_raw:sub(5, 6) .. "-" .. date_raw:sub(7, 8)
+
       local slug  = filename:match("%-%-(.-)__") or filename:match("%-%-(.-)%.md$")
       local title = slug and slug:gsub("-", " ") or vim.fn.fnamemodify(filepath, ":t:r")
+      if title == "" then title = date_fmt end
 
       table.insert(notes, {
         filepath = filepath,
         date     = date_raw,
-        date_fmt = date_raw:sub(1, 4) .. "-" .. date_raw:sub(5, 6) .. "-" .. date_raw:sub(7, 8),
+        date_fmt = date_fmt,
         title    = title,
         status   = status,
         rel_path = filename,

@@ -38,6 +38,7 @@
 - **URL linking** - insert URL links from clipboard; `<CR>` and ctrl+click open the browser
 - **File paste** - paste any file or image from clipboard with a denim filename
 - **Notes index** - virtual buffer listing all notes grouped by date with todo status markers
+- **Daily calendar** - floating month view preselected to today; move with `h/j/k/l`, page months with `<C-p>`/`<C-n>`, and `<CR>` opens or creates that day's daily note
 - **Statistics** - note counts, tag usage, and monthly activity at a glance
 
 ## Requirements
@@ -84,11 +85,18 @@ require("denim").setup({
     todo    = "todo",
     done    = "done",
     capture = "quick",
+    daily   = "daily",
+  },
+
+  -- First column of the daily calendar: 1 = Monday .. 7 = Sunday
+  calendar = {
+    start_weekday = 1,
   },
 
   keymaps = {
     -- basic
     new_note          = "<leader>nn",
+    daily_note        = "<leader>nd", -- opens the daily note calendar
     capture           = "<leader>nq",
     search_notes      = "<leader>nf",
     search_content    = "<leader>ns",
@@ -119,6 +127,7 @@ require("denim").setup({
 | Key | Action |
 |---|---|
 | `<leader>nn` | New note |
+| `<leader>nd` | Open the daily note calendar (today preselected; `<CR>` opens/creates) |
 | `<leader>nq` | Quick capture |
 | `<leader>nf` | Find note by filename (multi-term) |
 | `<leader>ns` | Search note contents (multi-term live grep) |
@@ -137,6 +146,20 @@ require("denim").setup({
 | `<leader>nvi` | Open notes index |
 | `<leader>nvs` | Open notes statistics |
 | `<CR>` | Follow markdown link (inside note files) |
+
+## Daily Calendar
+
+`<leader>nd` (or `:DenimCalendar`) opens a floating month view with **today preselected**. Pressing `<CR>` immediately opens or creates today's daily note — the same `YYYYMMDDT000000--__daily.md` as before. Use the keys below to jump around instead. `:DenimDaily` still opens today's daily note directly, without the calendar.
+
+| Key | Action |
+|---|---|
+| `h` `j` `k` `l` / arrows | Move selection (wraps across months) |
+| `<C-p>` / `<C-n>` | Previous / next month |
+| `t` | Jump back to today |
+| `<CR>` | Open or create the selected day's daily note |
+| `q` / `<Esc>` | Close |
+
+The first column defaults to Monday; set `calendar.start_weekday = 7` for a Sunday start.
 
 ## File Naming
 
@@ -269,6 +292,16 @@ Press `<C-s>` (insert or normal mode) to save and close. Press `Esc` or `q` in n
 
 If a template named `<capture>.md` exists in `notes_dir/.templates/` (e.g. `quick.md`), it is used as the initial content of the float. Tab stops (`$`) work the same as in template-based note creation.
 
+## Daily Notes
+
+`<leader>nd` (or `:DenimDaily`) opens today's daily note, creating it if it doesn't exist yet. The filename uses today's date with the time zeroed out and an empty title - just the date and a tag:
+
+```
+20260826T000000--__daily.md
+```
+
+Each day gets exactly one daily note: pressing `<leader>nd` again later in the day reopens the same file instead of creating a duplicate. The tag is configurable via `workflow.daily` (default `daily`), so the tag name sorts first in searches alongside your other tags.
+
 ## Notes Index
 
 `<leader>nvi` (or `:DenimIndex`) opens a virtual buffer listing all notes grouped by date, newest first:
@@ -331,6 +364,7 @@ If a template named `<capture>.md` exists in `notes_dir/.templates/` (e.g. `quic
 |---|---|
 | `:DenimCapture` | Quick capture |
 | `:DenimNew` | New note |
+| `:DenimDaily` | Open or create today's daily note |
 | `:DenimNewFromTemplate` | New note from template |
 | `:DenimNewTemplate` | Create a new template |
 | `:DenimSearch` | Find notes by filename |

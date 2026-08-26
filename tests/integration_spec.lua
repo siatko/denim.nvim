@@ -139,6 +139,7 @@ describe("integration", function()
       mock_tags({})
       notes.new_note()
       wait_for(path)
+      flush()
       assert.equal("keep this content", vim.fn.readfile(path)[3])
     end)
 
@@ -162,6 +163,49 @@ describe("integration", function()
       notes.new_note()
       flush()
       assert.same({}, vim.fn.glob(dir .. "/*.md", false, true))
+    end)
+  end)
+
+  -- ─── daily_note ──────────────────────────────────────────────────────────────
+
+  describe("daily_note", function()
+    it("creates a file dated today with time zero and daily tag", function()
+      notes.daily_note()
+      local expected = dir .. "/" .. os.date("%Y%m%d") .. "T000000--__daily.md"
+      wait_for(expected)
+      assert.equal(expected, vim.fn.expand("%:p"))
+    end)
+
+    it("reopens the existing daily note without overwriting it", function()
+      local path = dir .. "/" .. os.date("%Y%m%d") .. "T000000--__daily.md"
+      write_file(path, { "# DAILY", "", "keep this content" })
+      notes.daily_note()
+      flush()
+      assert.equal(path, vim.fn.expand("%:p"))
+      assert.equal("keep this content", vim.fn.readfile(path)[3])
+    end)
+
+    it("uses the configured daily tag name", function()
+      config.setup({ notes_dir = dir, workflow = { daily = "journal" } })
+      notes.daily_note()
+      local expected = dir .. "/" .. os.date("%Y%m%d") .. "T000000--__journal.md"
+      wait_for(expected)
+    end)
+
+    it("creates a daily note for an explicit date", function()
+      notes.daily_note("20260305")
+      local expected = dir .. "/20260305T000000--__daily.md"
+      wait_for(expected)
+      assert.equal(expected, vim.fn.expand("%:p"))
+    end)
+
+    it("reopens the daily note for an explicit date without overwriting it", function()
+      local path = dir .. "/20260305T000000--__daily.md"
+      write_file(path, { "# BACKDATED", "", "keep this content" })
+      notes.daily_note("20260305")
+      flush()
+      assert.equal(path, vim.fn.expand("%:p"))
+      assert.equal("keep this content", vim.fn.readfile(path)[3])
     end)
   end)
 
@@ -513,6 +557,7 @@ describe("integration", function()
       notes.cycle_workflow()
       vim.notify = orig
       assert.truthy(warned)
+      pcall(vim.api.nvim_buf_delete, vim.fn.bufnr(tmp), { force = true })
       vim.fn.delete(tmp)
     end)
 
@@ -692,6 +737,7 @@ describe("integration", function()
       vim.api.nvim_win_set_cursor(0, { 3, 5 })
       notes.follow_link()
       assert.equal(tmp, vim.fn.expand("%:p"))
+      pcall(vim.api.nvim_buf_delete, vim.fn.bufnr(tmp), { force = true })
       vim.fn.delete(tmp)
     end)
 
@@ -925,6 +971,7 @@ describe("integration", function()
       notes.refactor()
       vim.notify = orig_notify
       assert.truthy(warned)
+      pcall(vim.api.nvim_buf_delete, vim.fn.bufnr(tmp), { force = true })
       vim.fn.delete(tmp)
     end)
 
@@ -1619,6 +1666,7 @@ describe("integration", function()
       mock_tags({})
       notes.new_note_from_template()
       wait_for(existing)
+      flush()
       assert.equal("original content", vim.fn.readfile(existing)[3])
     end)
   end)
@@ -1911,6 +1959,13 @@ describe("integration", function()
       idx.open()
       local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
       assert.truthy(vim.tbl_contains(lines, "- [my idea](20260514--my-idea.md)"))
+    end)
+
+    it("falls back to the date as title for slug-less notes", function()
+      write_file(dir .. "/20260514T000000--__daily.md", { "" })
+      idx.open()
+      local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+      assert.truthy(vim.tbl_contains(lines, "- [2026-05-14](20260514T000000--__daily.md)"))
     end)
 
     it("derives title from slug when note has multiple tags", function()

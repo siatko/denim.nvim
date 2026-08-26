@@ -2,13 +2,19 @@ local M = {}
 
 M.defaults = {
   notes_dir = "~/notes",
+  calendar = {
+    -- 1 = Monday .. 7 = Sunday, for the first column of the calendar
+    start_weekday = 1,
+  },
   workflow = {
     todo    = "todo",
     done    = "done",
     capture = "quick",
+    daily   = "daily",
   },
   keymaps = {
     new_note          = "<leader>nn",
+    daily_note        = "<leader>nd", -- opens the daily note calendar (Enter opens today)
     capture           = "<leader>nq",
     search_notes      = "<leader>nf",
     search_content    = "<leader>ns",
