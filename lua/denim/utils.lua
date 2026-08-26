@@ -16,6 +16,12 @@ function M.slugify_title(name)
   return s
 end
 
+function M.link_text(title)
+  -- A title can come from a heading (already spaced) or a filename slug
+  -- (dash-separated); normalise to a spaced, uppercase link label.
+  return string.upper(title:gsub("%-", " "))
+end
+
 function M.slugify_tag(tag)
   local s = lower_utf8(tag)
   s = s:gsub("[%s%-]+", "_")
