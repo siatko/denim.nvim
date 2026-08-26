@@ -46,6 +46,20 @@ describe("slugify_title", function()
   end)
 end)
 
+describe("link_text", function()
+  it("uppercases a heading title", function()
+    assert.equal("FIX LOGIN BUG", utils.link_text("Fix Login Bug"))
+  end)
+
+  it("converts filename slug dashes to spaces and uppercases", function()
+    assert.equal("FIX LOGIN BUG", utils.link_text("fix-login-bug"))
+  end)
+
+  it("stays uppercase for an already-uppercase title", function()
+    assert.equal("TARGET NOTE", utils.link_text("TARGET NOTE"))
+  end)
+end)
+
 describe("slugify_tag", function()
   it("lowercases input", function()
     assert.equal("lua", utils.slugify_tag("Lua"))

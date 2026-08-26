@@ -178,7 +178,7 @@ function M.insert_link()
         actions.close(prompt_bufnr)
         vim.schedule(function()
           local rel  = relative_path(from_dir, entry.value.path)
-          local link = string.format("[%s](%s)", entry.value.title, rel)
+          local link = string.format("[%s](%s)", utils.link_text(entry.value.title), rel)
           local row, col = unpack(vim.api.nvim_win_get_cursor(0))
           local ln = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1]
           vim.api.nvim_buf_set_lines(0, row - 1, row, false,

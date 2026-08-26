@@ -1098,8 +1098,12 @@ describe("integration", function()
 
     it("warns when an image with the same base name already exists", function()
       package.loaded["img-clip"] = { paste_image = function() end }
-      local date = os.date("%Y%m%dT%H%M%S")
-      write_file(dir .. "/" .. date .. "--my-photo.png", {})
+      local real_date = os.date
+      os.date = function(fmt)
+        if fmt == "%Y%m%dT%H%M%S" then return "20260101T000000" end
+        return real_date(fmt)
+      end
+      write_file(dir .. "/20260101T000000--my-photo.png", {})
       mock_input("my photo")
       mock_tags({})
       local warned = false
@@ -1109,6 +1113,7 @@ describe("integration", function()
       flush()
       vim.notify = orig_notify
       package.loaded["img-clip"] = nil
+      os.date = real_date
       assert.truthy(warned)
     end)
 
@@ -2185,6 +2190,46 @@ describe("integration", function()
       local line = vim.api.nvim_buf_get_lines(0, 2, 3, false)[1]
       assert.truthy(line:find("[TARGET NOTE]", 1, true))
       assert.truthy(line:find("20260514--target.md", 1, true))
+    end)
+
+    it("uses an uppercase, space-separated title for slug titles", function()
+      local target = dir .. "/20260514--target.md"
+      local source = dir .. "/20260514--source.md"
+      write_file(target, { "# TARGET NOTE", "" })
+      write_file(source, { "# SOURCE", "", "see " })
+      open_buf(source)
+      vim.api.nvim_win_set_cursor(0, { 3, 3 })
+
+      local enter_fn
+      package.loaded["telescope.actions"] = {
+        select_default = { replace = function(_, fn) enter_fn = fn end },
+        close          = function() end,
+      }
+      package.loaded["telescope.actions.state"] = {
+        get_selected_entry = function()
+          return { value = { path = target, title = "fix-login-bug" } }
+        end,
+      }
+      package.loaded["telescope.pickers"] = {
+        new = function(_, opts)
+          return { find = function() opts.attach_mappings(1, function() end) end }
+        end,
+      }
+      package.loaded["telescope.finders"] = { new_table = function() return {} end }
+      package.loaded["telescope.config"]  = {
+        values = {
+          generic_sorter = function() return {} end,
+          file_previewer = function() return {} end,
+        },
+      }
+
+      tel.insert_link()
+      assert.truthy(enter_fn, "select_default handler was not registered")
+      enter_fn()
+      flush()
+
+      local line = vim.api.nvim_buf_get_lines(0, 2, 3, false)[1]
+      assert.truthy(line:find("[FIX LOGIN BUG]", 1, true))
     end)
 
     it("warns when no file is open", function()
