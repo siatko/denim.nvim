@@ -2,6 +2,7 @@ local M = {}
 
 function M.setup(opts)
   require("denim.config").setup(opts)
+  require("denim.notes").ensure_notes_dir()
 
   local keymaps = require("denim.config").options.keymaps
   if keymaps then

@@ -87,6 +87,24 @@ describe("integration", function()
     end)
   end)
 
+  -- ─── setup ───────────────────────────────────────────────────────────────────
+
+  describe("setup", function()
+    it("creates the notes_dir when it does not exist", function()
+      local target = dir .. "/missing/sub/notes"
+      assert.equal(0, vim.fn.isdirectory(target))
+      require("denim").setup({ notes_dir = target })
+      assert.equal(1, vim.fn.isdirectory(target))
+    end)
+
+    it("leaves an existing notes_dir untouched", function()
+      local existing = dir .. "/existing"
+      vim.fn.mkdir(existing, "p")
+      require("denim").setup({ notes_dir = existing })
+      assert.equal(1, vim.fn.isdirectory(existing))
+    end)
+  end)
+
   -- ─── new_note ────────────────────────────────────────────────────────────────
 
   describe("new_note", function()
