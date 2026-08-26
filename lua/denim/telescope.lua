@@ -144,7 +144,8 @@ function M.insert_link()
     if filepath ~= current_file then
       local lines = vim.fn.readfile(filepath, "", 1)
       local title = (lines and lines[1] and lines[1]:match("^#%s+(.+)$"))
-        or vim.fn.fnamemodify(filepath, ":t:r")
+        or utils.title_from_filename(vim.fn.fnamemodify(filepath, ":t"))
+      if title == "" then title = vim.fn.fnamemodify(filepath, ":t:r") end
       table.insert(entries, { path = filepath, title = title })
     end
   end

@@ -132,6 +132,24 @@ describe("tags_from_filename", function()
   end)
 end)
 
+describe("title_from_filename", function()
+  it("extracts the slug between -- and __", function()
+    assert.equal("fix-login-bug", utils.title_from_filename("20260514T143022--fix-login-bug__todo.md"))
+  end)
+
+  it("extracts the slug when there are no tags", function()
+    assert.equal("my-note", utils.title_from_filename("20260514--my-note.md"))
+  end)
+
+  it("returns empty string for filenames without a slug", function()
+    assert.equal("", utils.title_from_filename("notanotefile.txt"))
+  end)
+
+  it("returns empty string for daily notes with no title", function()
+    assert.equal("", utils.title_from_filename("20260514T000000--__daily.md"))
+  end)
+end)
+
 describe("relative_path", function()
   it("same directory", function()
     assert.equal("note.md", utils.relative_path("/notes/inbox", "/notes/inbox/note.md"))
