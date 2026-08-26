@@ -41,6 +41,10 @@ function M.tags_from_filename(filename)
   return tags
 end
 
+function M.title_from_filename(filename)
+  return filename:match("%-%-(.-)__") or filename:match("%-%-(.-)%.md$") or ""
+end
+
 function M.relative_path(from_dir, to_file)
   local function split(path)
     local t = {}

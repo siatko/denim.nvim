@@ -2192,10 +2192,10 @@ describe("integration", function()
       assert.truthy(line:find("20260514--target.md", 1, true))
     end)
 
-    it("uses an uppercase, space-separated title for slug titles", function()
-      local target = dir .. "/20260514--target.md"
+    it("uses only the slug title from a filename with no heading, uppercased with spaces", function()
+      local target = dir .. "/20260514T143022--fix-login-bug__todo.md"
       local source = dir .. "/20260514--source.md"
-      write_file(target, { "# TARGET NOTE", "" })
+      write_file(target, {})
       write_file(source, { "# SOURCE", "", "see " })
       open_buf(source)
       vim.api.nvim_win_set_cursor(0, { 3, 3 })
