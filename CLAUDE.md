@@ -28,13 +28,15 @@ denim.nvim is a Neovim plugin. All modules live under `lua/denim/`. `plugin/deni
 
 **`utils.lua`** - pure Lua, no Neovim API. All functions are unit-testable in isolation: `slugify_title`, `slugify_tag`, `tags_from_filename`, `relative_path`, `rename_tag_in_filename`, `remove_tag_from_filename`, `add_tag_to_filename`, `resolve_slug`, `find_link_path`.
 
-**`notes.lua`** - all filesystem operations that act on the current buffer or create new files: `new_note`, `capture`, `new_note_from_template`, `new_template`, `follow_link`, `cycle_workflow`, `refactor`, `paste_image`, `insert_url_link`. After any rename, it calls `telescope.update_links_to` to rewrite backlinks across all notes.
+**`notes.lua`** - all filesystem operations that act on the current buffer or create new files: `new_note`, `daily_note`, `capture`, `new_note_from_template`, `new_template`, `follow_link`, `cycle_workflow`, `refactor`, `paste_image`, `insert_url_link`. After any rename, it calls `telescope.update_links_to` to rewrite backlinks across all notes.
 
 **`telescope.lua`** - all Telescope pickers and the backlink rewriter: `search_notes`, `search_content`, `search_tags`, `search_untagged`, `search_templates`, `insert_link`, `backlinks`, `pick_tags`, `pick_template`, `rename_tag`, `update_links_to`. `pick_tags` is an iterative picker - it re-opens itself when the user types a new tag name, accumulating selections until an empty Enter confirms.
 
 **`index.lua`** - virtual `nofile` buffer listing all notes grouped by date with todo status markers. `_build_lines(notes)` is exported for unit testing.
 
 **`stats.lua`** - virtual `nofile` buffer with note/todo counts, tag frequency, and monthly activity. Reads filenames only (no file contents except for linked-note counting).
+
+**`calendar.lua`** - floating month view for daily notes (opened by the `daily_note` keymap and `:DenimCalendar`). Preselects today; `h/j/k/l` (and arrows) move, `<C-p>`/`<C-n>` page months, `t` jumps to today, `<CR>` calls `notes.daily_note(date)` for the selected day, `q`/`<Esc>` close. Rendering and date math live in pure `utils` helpers (`month_grid`, `day_of_week`, `add_days`, `add_months`, `days_in_month`); the module only manages the float, its buffer-local keymaps, and the today highlight.
 
 **`init.lua`** - wires all keymaps, the `BufEnter` autocmd that sets `<CR>` for link following, and all `Denim*` user commands.
 
@@ -72,6 +74,7 @@ Every operation that renames a file follows the same three steps, always in this
 - **`utils_spec.lua`** - unit tests for every function in `utils.lua`
 - **`index_spec.lua`** - unit tests for `index._build_lines`
 - **`stats_spec.lua`** - unit tests for stats computation
+- **`calendar_spec.lua`** - integration tests for the daily calendar float (today preselection, cursor position, movement wrapping, month paging, `<CR>` create/open)
 - **`integration_spec.lua`** - integration tests for all user-facing operations; each test creates a real temp directory, runs the function, and asserts on filesystem state and buffer state
 
 ### Integration test patterns

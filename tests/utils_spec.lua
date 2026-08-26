@@ -457,3 +457,169 @@ describe("find_link_path", function()
     assert.equal("diagram.png", utils.find_link_path("see ![Diagram](diagram.png) here", 6))
   end)
 end)
+
+describe("days_in_month", function()
+  it("returns 31 for January", function()
+    assert.equal(31, utils.days_in_month(2026, 1))
+  end)
+
+  it("returns 28 for February in a non-leap year", function()
+    assert.equal(28, utils.days_in_month(2026, 2))
+  end)
+
+  it("returns 29 for February in a leap year", function()
+    assert.equal(29, utils.days_in_month(2024, 2))
+  end)
+
+  it("returns 28 for February in a century non-leap year", function()
+    assert.equal(28, utils.days_in_month(1900, 2))
+  end)
+
+  it("returns 29 for February in a century leap year", function()
+    assert.equal(29, utils.days_in_month(2000, 2))
+  end)
+
+  it("returns 30 for April", function()
+    assert.equal(30, utils.days_in_month(2026, 4))
+  end)
+end)
+
+describe("day_of_week", function()
+  it("returns 1 (Monday) for 2024-01-01", function()
+    assert.equal(1, utils.day_of_week(2024, 1, 1))
+  end)
+
+  it("returns 3 (Wednesday) for 2026-08-26", function()
+    assert.equal(3, utils.day_of_week(2026, 8, 26))
+  end)
+
+  it("returns 6 (Saturday) for 2000-01-01", function()
+    assert.equal(6, utils.day_of_week(2000, 1, 1))
+  end)
+
+  it("returns 7 (Sunday) for 2026-03-01", function()
+    assert.equal(7, utils.day_of_week(2026, 3, 1))
+  end)
+
+  it("returns 7 (Sunday) for 2023-01-01", function()
+    assert.equal(7, utils.day_of_week(2023, 1, 1))
+  end)
+end)
+
+describe("add_days", function()
+  it("returns the same date for delta 0", function()
+    assert.same({ 2026, 8, 26 }, { utils.add_days(2026, 8, 26, 0) })
+  end)
+
+  it("adds within a month", function()
+    assert.same({ 2026, 8, 31 }, { utils.add_days(2026, 8, 26, 5) })
+  end)
+
+  it("rolls into the next month", function()
+    assert.same({ 2026, 9, 1 }, { utils.add_days(2026, 8, 31, 1) })
+  end)
+
+  it("rolls into the next year", function()
+    assert.same({ 2027, 1, 1 }, { utils.add_days(2026, 12, 31, 1) })
+  end)
+
+  it("rolls back into the previous month", function()
+    assert.same({ 2026, 7, 31 }, { utils.add_days(2026, 8, 1, -1) })
+  end)
+
+  it("rolls back into the previous year", function()
+    assert.same({ 2025, 12, 31 }, { utils.add_days(2026, 1, 1, -1) })
+  end)
+
+  it("crosses a leap-year February", function()
+    assert.same({ 2024, 2, 29 }, { utils.add_days(2024, 2, 28, 1) })
+    assert.same({ 2024, 3, 1 }, { utils.add_days(2024, 2, 29, 1) })
+  end)
+end)
+
+describe("add_months", function()
+  it("returns the same month for delta 0", function()
+    assert.same({ 2026, 8, 26 }, { utils.add_months(2026, 8, 26, 0) })
+  end)
+
+  it("moves to the next month keeping the day", function()
+    assert.same({ 2026, 9, 26 }, { utils.add_months(2026, 8, 26, 1) })
+  end)
+
+  it("clamps to the last day of the target month", function()
+    assert.same({ 2026, 2, 28 }, { utils.add_months(2026, 1, 31, 1) })
+    assert.same({ 2024, 2, 29 }, { utils.add_months(2024, 1, 31, 1) })
+  end)
+
+  it("rolls into the next year", function()
+    assert.same({ 2027, 1, 15 }, { utils.add_months(2026, 12, 15, 1) })
+  end)
+
+  it("rolls back into the previous year", function()
+    assert.same({ 2025, 12, 15 }, { utils.add_months(2026, 1, 15, -1) })
+  end)
+end)
+
+describe("date_raw", function()
+  it("zero-pads month and day", function()
+    assert.equal("20260305", utils.date_raw(2026, 3, 5))
+  end)
+
+  it("keeps double-digit month and day", function()
+    assert.equal("20261231", utils.date_raw(2026, 12, 31))
+  end)
+end)
+
+describe("month_grid", function()
+  it("centers the month title on the first line", function()
+    local g = utils.month_grid(2026, 8, 1)
+    assert.equal("     August 2026     ", g.lines[1])
+  end)
+
+  it("starts the weekday header on Monday by default", function()
+    local g = utils.month_grid(2026, 8, 1)
+    assert.equal("Mo Tu We Th Fr Sa Su ", g.lines[2])
+  end)
+
+  it("starts the weekday header on Sunday when configured", function()
+    local g = utils.month_grid(2026, 8, 7)
+    assert.equal("Su Mo Tu We Th Fr Sa ", g.lines[2])
+  end)
+
+  it("places August 2026's first day (Saturday) in column 6", function()
+    local g = utils.month_grid(2026, 8, 1)
+    assert.is_nil(g.weeks[1][1])
+    assert.equal(1, g.weeks[1][6])
+    assert.equal(2, g.weeks[1][7])
+  end)
+
+  it("places February 2026's first day (Sunday) in column 7", function()
+    local g = utils.month_grid(2026, 2, 1)
+    assert.equal(1, g.weeks[1][7])
+  end)
+
+  it("lays out every day of the month exactly once", function()
+    local g = utils.month_grid(2026, 8, 1)
+    local count = 0
+    for _, week in ipairs(g.weeks) do
+      for c = 1, 7 do
+        if week[c] then count = count + 1 end
+      end
+    end
+    assert.equal(31, count)
+  end)
+
+  it("produces a fixed width of 21 columns", function()
+    local g = utils.month_grid(2026, 8, 1)
+    assert.equal(21, g.width)
+    for _, line in ipairs(g.lines) do
+      assert.equal(21, #line)
+    end
+  end)
+
+  it("marks the first week row as buffer row 3", function()
+    local g = utils.month_grid(2026, 8, 1)
+    assert.equal(3, g.first_cell_row)
+    assert.equal(3 + #g.weeks - 1, #g.lines)
+  end)
+end)

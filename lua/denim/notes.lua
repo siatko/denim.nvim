@@ -43,6 +43,26 @@ function M.new_note()
   end)
 end
 
+-- date is an optional "YYYYMMDD" string; defaults to today
+function M.daily_note(date)
+  local opts = get_opts()
+  vim.fn.mkdir(opts.notes_dir, "p")
+
+  local daily_tag = slugify_tag(opts.workflow.daily)
+  local date_raw  = (date or os.date("%Y%m%d")):gsub("%D", "")
+  local filename  = date_raw .. "T000000--__" .. daily_tag .. ".md"
+  local filepath  = opts.notes_dir .. "/" .. filename
+
+  if vim.fn.filereadable(filepath) == 1 then
+    vim.notify("denim: daily note already exists, opening: " .. filename, vim.log.levels.INFO)
+    vim.cmd("edit " .. vim.fn.fnameescape(filepath))
+    return
+  end
+
+  vim.fn.writefile({}, filepath)
+  vim.cmd("edit " .. vim.fn.fnameescape(filepath))
+end
+
 local function find_and_remove_stop(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for i, line in ipairs(lines) do

@@ -140,4 +140,111 @@ function M.find_link_path(line, col)
   return nearest_path
 end
 
+local function is_leap(year)
+  return (year % 4 == 0 and year % 100 ~= 0) or year % 400 == 0
+end
+
+function M.days_in_month(year, month)
+  if month == 2 then return is_leap(year) and 29 or 28 end
+  local lengths = { 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+  return lengths[month]
+end
+
+-- Zeller's congruence; returns 1 = Monday .. 7 = Sunday
+function M.day_of_week(year, month, day)
+  local m, y = month, year
+  if m < 3 then m = m + 12; y = y - 1 end
+  local h = (day + math.floor((13 * (m + 1)) / 5) + y + math.floor(y / 4)
+    - math.floor(y / 100) + math.floor(y / 400)) % 7
+  return (h + 5) % 7 + 1
+end
+
+-- Returns the year, month, day reached by moving delta days (may cross months/years)
+function M.add_days(year, month, day, delta)
+  if delta == 0 then return year, month, day end
+  local d = day + delta
+  while d < 1 do
+    month = month - 1
+    if month < 1 then month = 12; year = year - 1 end
+    d = d + M.days_in_month(year, month)
+  end
+  while d > M.days_in_month(year, month) do
+    d = d - M.days_in_month(year, month)
+    month = month + 1
+    if month > 12 then month = 1; year = year + 1 end
+  end
+  return year, month, d
+end
+
+-- Returns the year, month, day reached by moving delta months (day is clamped to month end)
+function M.add_months(year, month, day, delta)
+  local total = (year * 12) + (month - 1) + delta
+  local ny = math.floor(total / 12)
+  local nm = (total % 12) + 1
+  return ny, nm, math.min(day, M.days_in_month(ny, nm))
+end
+
+function M.date_raw(year, month, day)
+  return string.format("%04d%02d%02d", year, month, day)
+end
+
+local month_names = {
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+}
+
+local weekday_names = { "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su" }
+
+-- Renders a month as a grid of 3-char-wide cells.
+-- start_weekday is 1 (Monday) .. 7 (Sunday) for the first column.
+-- Returns:
+--   lines          buffer lines (title, weekday header, week rows)
+--   weeks          rows of day numbers (nil for empty cells)
+--   first_cell_row 1-based buffer row of the first week row
+--   width          content width in columns
+function M.month_grid(year, month, start_weekday)
+  start_weekday = start_weekday or 1
+  local width = 7 * 3
+
+  local title = month_names[month] .. " " .. tostring(year)
+  local pad   = math.max(0, width - #title)
+  local left  = math.floor(pad / 2)
+  local title_line = string.rep(" ", left) .. title .. string.rep(" ", pad - left)
+
+  local header_parts = {}
+  for i = 1, 7 do
+    local idx = (start_weekday - 1 + i - 1) % 7 + 1
+    header_parts[i] = weekday_names[idx] .. " "
+  end
+
+  local first_col = (M.day_of_week(year, month, 1) - start_weekday + 7) % 7 + 1
+  local dim       = M.days_in_month(year, month)
+  local weeks, week, col = {}, {}, first_col
+  for d = 1, dim do
+    week[col] = d
+    col = col + 1
+    if col == 8 then
+      weeks[#weeks + 1] = week
+      week, col = {}, 1
+    end
+  end
+  if next(week) then weeks[#weeks + 1] = week end
+
+  local lines = { title_line, table.concat(header_parts) }
+  for _, w in ipairs(weeks) do
+    local parts = {}
+    for c = 1, 7 do
+      parts[c] = w[c] and (string.format("%2d", w[c]) .. " ") or "   "
+    end
+    lines[#lines + 1] = table.concat(parts)
+  end
+
+  return {
+    lines          = lines,
+    weeks          = weeks,
+    first_cell_row = 3,
+    width          = width,
+  }
+end
+
 return M
