@@ -1098,8 +1098,12 @@ describe("integration", function()
 
     it("warns when an image with the same base name already exists", function()
       package.loaded["img-clip"] = { paste_image = function() end }
-      local date = os.date("%Y%m%dT%H%M%S")
-      write_file(dir .. "/" .. date .. "--my-photo.png", {})
+      local real_date = os.date
+      os.date = function(fmt)
+        if fmt == "%Y%m%dT%H%M%S" then return "20260101T000000" end
+        return real_date(fmt)
+      end
+      write_file(dir .. "/20260101T000000--my-photo.png", {})
       mock_input("my photo")
       mock_tags({})
       local warned = false
@@ -1109,6 +1113,7 @@ describe("integration", function()
       flush()
       vim.notify = orig_notify
       package.loaded["img-clip"] = nil
+      os.date = real_date
       assert.truthy(warned)
     end)
 
